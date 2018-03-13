@@ -79,6 +79,7 @@ int main(void) {
 
     WDT_A_hold(WDT_A_BASE);
 
+    BSP_Clock_InitFastest();
     InitGraphics();
     InitHWTimers();
     InitButtons();

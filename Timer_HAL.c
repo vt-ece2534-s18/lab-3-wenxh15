@@ -5,8 +5,9 @@
 
 #include <TIMER_HAL.h>
 
-#define TIMER0_PRESCALER TIMER32_PRESCALER_256
-#define TIMER1_PRESCALER TIMER32_PRESCALER_1
+#define TIMER0_PRESCALER TIMER32_PRESCALER_1
+#define TIMER1_PRESCALER TIMER32_PRESCALER_256
+#define SYS_CLOCK_F 48000000
 
 /* This function gets the hardware timer (since it needs its prescaler value) and time in milliseconds
  * and returns the number of wait cycles associated with that time.
@@ -17,39 +18,40 @@
 int64_t WaitCycles(uint32_t hwtimer, uint64_t TimeInMS)
 {
      // This function returns the system clock
-     uint64_t sysClock = CS_getSMCLK();
+    //uint64_t sysClock = CS_getSMCLK();
+    uint64_t sysClock = SYS_CLOCK_F;
 
-     uint8_t  prescalerFlag;
-     uint64_t prescalerValue;
+    uint8_t  prescalerFlag;
+    uint64_t prescalerValue;
 
-     // Based on the hw timer, we have to see which prescaler to use
-     if (hwtimer == TIMER32_0_BASE)
-         prescalerFlag = TIMER0_PRESCALER;
-     else if (hwtimer == TIMER32_1_BASE)
-         prescalerFlag = TIMER1_PRESCALER;
+    // Based on the hw timer, we have to see which prescaler to use
+    if (hwtimer == TIMER32_0_BASE)
+        prescalerFlag = TIMER0_PRESCALER;
+    else if (hwtimer == TIMER32_1_BASE)
+        prescalerFlag = TIMER1_PRESCALER;
 
-     // The prescaler we get in the previous section is simply a flag. "Control click" on it to see what I mean.
-     // We need to turn that into the actual value of the prescaler
-     switch(prescalerFlag)
-     {
-     case TIMER32_PRESCALER_1:
-         prescalerValue = 1;
-         break;
-     case TIMER32_PRESCALER_16:
-         prescalerValue = 16;
-         break;
-     case TIMER32_PRESCALER_256:
-         prescalerValue = 256;
-         break;
-     }
+    // The prescaler we get in the previous section is simply a flag. "Control click" on it to see what I mean.
+    // We need to turn that into the actual value of the prescaler
+    switch(prescalerFlag)
+    {
+    case TIMER32_PRESCALER_1:
+        prescalerValue = 1;
+        break;
+    case TIMER32_PRESCALER_16:
+        prescalerValue = 16;
+        break;
+    case TIMER32_PRESCALER_256:
+        prescalerValue = 256;
+        break;
+    }
 
-     int64_t waitCycles;
-     waitCycles = TimeInMS * (sysClock / prescalerValue / 1000);
+    int64_t waitCycles;
+    waitCycles = TimeInMS * (sysClock / prescalerValue / 1000);
 
-     if (waitCycles > UINT32_MAX)
-         waitCycles = -1;
+    if (waitCycles > UINT32_MAX)
+        waitCycles = -1;
 
-     return waitCycles;
+    return waitCycles;
 }
 
 
