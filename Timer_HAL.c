@@ -3,20 +3,64 @@
 // Also known as BUTTON HAL (Hardware Abstraction Layer)
 // HAL is a specific form of API that designs the interface with a certain hardware
 
-#include <ti/devices/msp432p4xx/driverlib/driverlib.h>
 #include <TIMER_HAL.h>
-#define TIMER0_PRESCALER 256
-#define TIMER1_PRESCALER 1
-#define SYS_CLOCK_F 3 // We measure the time in us and therefore, we store frequency in MHz
+
+#define TIMER0_PRESCALER TIMER32_PRESCALER_256
+#define TIMER1_PRESCALER TIMER32_PRESCALER_1
+
+/* This function gets the hardware timer (since it needs its prescaler value) and time in milliseconds
+ * and returns the number of wait cycles associated with that time.
+ * For example, if the system clock is 3 MHz, the prescaler is 1 and TimeInMS is 1000, then the
+ * returned value is going to be 3000,000
+ * If the number of wait cycles is too big for this software timer to be used, it returns -1
+ */
+int64_t WaitCycles(uint32_t hwtimer, uint64_t TimeInMS)
+{
+     // This function returns the system clock
+     uint64_t sysClock = CS_getSMCLK();
+
+     uint8_t  prescalerFlag;
+     uint64_t prescalerValue;
+
+     // Based on the hw timer, we have to see which prescaler to use
+     if (hwtimer == TIMER32_0_BASE)
+         prescalerFlag = TIMER0_PRESCALER;
+     else if (hwtimer == TIMER32_1_BASE)
+         prescalerFlag = TIMER1_PRESCALER;
+
+     // The prescaler we get in the previous section is simply a flag. "Control click" on it to see what I mean.
+     // We need to turn that into the actual value of the prescaler
+     switch(prescalerFlag)
+     {
+     case TIMER32_PRESCALER_1:
+         prescalerValue = 1;
+         break;
+     case TIMER32_PRESCALER_16:
+         prescalerValue = 16;
+         break;
+     case TIMER32_PRESCALER_256:
+         prescalerValue = 256;
+         break;
+     }
+
+     int64_t waitCycles;
+     waitCycles = TimeInMS * (sysClock / prescalerValue / 1000);
+
+     if (waitCycles > UINT32_MAX)
+         waitCycles = -1;
+
+     return waitCycles;
+}
 
 
 void InitOneShotSWTimer(
         OneShotSWTimer_t* OST,
         uint32_t  hwtimer,
-        uint32_t  waitCycles)
+        uint32_t  TimeInMS)
 {
     OST->hwtimer = hwtimer;
-    OST->waitCycles  = waitCycles;
+
+    OST->waitCycles  = WaitCycles(hwtimer, TimeInMS);
 }
 
 void StartOneShotSWTimer(OneShotSWTimer_t* OST)
@@ -48,26 +92,16 @@ bool OneShotSWTimerExpired(OneShotSWTimer_t* OST)
 
 
 void InitHWTimers() {
-    Timer32_initModule(TIMER32_0_BASE, TIMER32_PRESCALER_256, TIMER32_32BIT, TIMER32_PERIODIC_MODE);
+    // The prescaler for each of the timers is defined as a macro
+    Timer32_initModule(TIMER32_0_BASE, TIMER0_PRESCALER, TIMER32_32BIT, TIMER32_PERIODIC_MODE);
     Timer32_setCount(TIMER32_0_BASE, UINT32_MAX);
     Timer32_startTimer(TIMER32_0_BASE, false);
 
-    Timer32_initModule(TIMER32_1_BASE, TIMER32_PRESCALER_1, TIMER32_32BIT, TIMER32_PERIODIC_MODE);
+    Timer32_initModule(TIMER32_1_BASE, TIMER1_PRESCALER, TIMER32_32BIT, TIMER32_PERIODIC_MODE);
     Timer32_setCount(TIMER32_1_BASE, UINT32_MAX);
     Timer32_startTimer(TIMER32_1_BASE, false);
 }
 
- uint64_t WaitCycles(uint32_t hwtimer, uint32_t TimeInUs)
-  {
-      uint64_t waitCycles;
-      if (hwtimer == TIMER32_0_BASE)
-          waitCycles = TimeInUs * SYS_CLOCK_F / TIMER0_PRESCALER;
-
-      else  if (hwtimer == TIMER32_1_BASE)
-          waitCycles = TimeInUs * SYS_CLOCK_F / TIMER1_PRESCALER;
-
-      return waitCycles;
-  }
 
 
 

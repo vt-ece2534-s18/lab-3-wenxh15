@@ -6,8 +6,7 @@
 #ifndef BUTTONS_H_
 #define BUTTONS_H_
 
-#include <Timer_HAL.h>
-typedef enum {stable0, trans0To1, stable1, trans1To0} DebounceState_t;
+#include <ti/devices/msp432p4xx/driverlib/driverlib.h>
 
 void InitButtons();
 

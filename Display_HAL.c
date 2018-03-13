@@ -1,15 +1,7 @@
-/*
- * Display_HAL.c
- *
- *  Created on: Mar 13, 2018
- *      Author: temp
- */
-
 #include <ti/grlib/grlib.h>
 #include "LcdDriver/Crystalfontz128x128_ST7735.h"
 #include "LcdDriver/HAL_MSP_EXP432P401R_Crystalfontz128x128_ST7735.h"
-
-
+#include <ti/devices/msp432p4xx/driverlib/driverlib.h>
 
 Graphics_Context g_sContext;
 
@@ -30,7 +22,8 @@ void LCDClearDisplay(int color) {
     Graphics_clearDisplay(&g_sContext);
 }
 
-void LCDDrawChar(unsigned row, unsigned col, char c) {
+
+void LCDDrawChar(unsigned row, unsigned col, int8_t c) {
     Graphics_drawString(&g_sContext,
                         &c,
                         1,
@@ -38,7 +31,6 @@ void LCDDrawChar(unsigned row, unsigned col, char c) {
                         16 * (row % 8),
                         OPAQUE_TEXT);
 }
-
 
 void PrintString(char *str, int row, int col) {
     int i;

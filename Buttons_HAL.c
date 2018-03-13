@@ -6,8 +6,9 @@
 #include <ti/devices/msp432p4xx/driverlib/driverlib.h>
 #include <TIMER_HAL.h>
 #include <Buttons_HAL.h>
-#define DEBOUNCE_TIMING 100000 // 100 ms = 100000 us
 
+#define DEBOUNCE_TIMING 100 // 100 ms
+typedef enum {stable0, trans0To1, stable1, trans1To0} DebounceState_t;
 
 //------------------------------------------
 // Debounce FSM
@@ -75,8 +76,6 @@ bool Debounce_Button(DebounceState_t *S, OneShotSWTimer_t *timer, bool rawBtn) {
              if (timerExpired)
                  *S = stable0;
         break;
-     default:
-
     }
 
     if (startTimer)
@@ -125,11 +124,9 @@ bool Booster_Top_Button_Pushed() {
     // The timer needs to be initialized only once when the button is used for the first time
     if (!initTimer) {
 
-        // calculates the number of wait cycles for debouncing
-        uint64_t waitCycles = WaitCycles(TIMER32_1_BASE, DEBOUNCE_TIMING);
         InitOneShotSWTimer(&timer,
                            TIMER32_1_BASE,
-                           waitCycles);
+                           DEBOUNCE_TIMING);
         initTimer = true;
     }
 
@@ -150,11 +147,9 @@ bool Booster_Bottom_Button_Pushed() {
     // The timer needs to be initialized only once when the button is used for the first time
     if (!initTimer) {
 
-        // calculates the number of wait cycles for debouncing
-        uint64_t waitCycles = WaitCycles(TIMER32_1_BASE, DEBOUNCE_TIMING);
         InitOneShotSWTimer(&timer,
                            TIMER32_1_BASE,
-                           waitCycles);
+                           DEBOUNCE_TIMING);
         initTimer = true;
     }
 

@@ -37,12 +37,6 @@ bool OneShotSWTimerExpired(OneShotSWTimer_t* OST);
  */
 void InitHWTimers();
 
-/* This function gets the hardware timer (since it needs its prescaler value) and time in microseconds
- * and returns the number of wait cycles associated with that time.
- * For example, if the system clock is 3 MHz, the prescaler is 1 and TimeInUS is 100, then the
- * returned value is going to be 300
- */
-uint64_t WaitCycles(uint32_t hwtimer, uint32_t TimeInUs);
 
 
 #endif // TIMERS_H_

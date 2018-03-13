@@ -8,7 +8,7 @@
 #include <Timer_HAL.h>
 #include <Display_HAL.h>
 
-#define TEN_SEC 10000000 // 10 seconds in microsecond
+#define OPENING_WAIT 10000 // 10 seconds or 10000 ms
 
 void DrawOpeningScreen()
 {
@@ -30,11 +30,9 @@ void ScreensFSM()
 {
     static enum states {INCEPTION, OPENING, MENU} state = INCEPTION;
     static OneShotSWTimer_t OST;
-    uint64_t waitCycles;
-    waitCycles = WaitCycles(TIMER32_1_BASE, TEN_SEC);
     InitOneShotSWTimer(&OST,
                        TIMER32_1_BASE,
-                       waitCycles);
+                       OPENING_WAIT);
 
     // Set the default outputs
     bool drawOpening = false;
