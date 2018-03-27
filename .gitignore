@@ -33,3 +33,5 @@
 RemoteSystemsTempFiles
 Debug
 targetConfigs
+/Display_HAL.h
+/Display_HAL.c
