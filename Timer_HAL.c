@@ -92,6 +92,79 @@ bool OneShotSWTimerExpired(OneShotSWTimer_t* OST)
     return expired;
 }
 
+void InitOneShotCARTimer(
+        OneShotSWTimer_t* CAROST,
+        uint32_t  hwtimer,
+        uint32_t  TimeInMS)
+{
+    CAROST->hwtimer = hwtimer;
+
+    CAROST->waitCycles  = WaitCycles(hwtimer, TimeInMS);
+}
+
+void StartOneShotCARTimer(OneShotSWTimer_t* CAROST)
+{
+    CAROST->startCounter = Timer32_getValue(CAROST->hwtimer);
+}
+
+bool OneShotCARTimerExpired(OneShotSWTimer_t* CAROST)
+{
+    bool expired = false;
+
+    // HW timer period
+    int64_t HWTimerPeriod = UINT32_MAX+ 1;
+
+    //This is C2 from notes, while OST->startCounter is C1
+    uint32_t currentCounter = Timer32_getValue(CAROST->hwtimer);
+
+    int64_t ElapsedCycles =  CAROST->startCounter - currentCounter;
+    if (ElapsedCycles < 0)
+        ElapsedCycles += HWTimerPeriod ;
+
+    if (ElapsedCycles >= CAROST->waitCycles)
+        expired = true;
+    else
+        expired = false;
+
+    return expired;
+}
+
+void InitOneShotOBSTimer(
+        OneShotSWTimer_t* OBSOST,
+        uint32_t  hwtimer,
+        uint32_t  TimeInMS)
+{
+    OBSOST->hwtimer = hwtimer;
+
+    OBSOST->waitCycles  = WaitCycles(hwtimer, TimeInMS);
+}
+
+void StartOneShotOBSTimer(OneShotSWTimer_t* OBSOST)
+{
+    OBSOST->startCounter = Timer32_getValue(OBSOST->hwtimer);
+}
+
+bool OneShotOBSTimerExpired(OneShotSWTimer_t* OBSOST)
+{
+    bool expired = false;
+
+    // HW timer period
+    int64_t HWTimerPeriod = UINT32_MAX+ 1;
+
+    //This is C2 from notes, while OST->startCounter is C1
+    uint32_t currentCounter = Timer32_getValue(OBSOST->hwtimer);
+
+    int64_t ElapsedCycles =  OBSOST->startCounter - currentCounter;
+    if (ElapsedCycles < 0)
+        ElapsedCycles += HWTimerPeriod ;
+
+    if (ElapsedCycles >= OBSOST->waitCycles)
+        expired = true;
+    else
+        expired = false;
+
+    return expired;
+}
 
 void InitHWTimers() {
     // The prescaler for each of the timers is defined as a macro
@@ -104,6 +177,13 @@ void InitHWTimers() {
     Timer32_startTimer(TIMER32_1_BASE, false);
 }
 
+void StartOneShotHWTimer() {
+    Timer32_setCount(TIMER32_0_BASE, 3000000);   //  1 s period
+    Timer32_startTimer(TIMER32_0_BASE, true);
+}
 
 
+int OneShotHWTimerExpired() {
+    return (Timer32_getValue(TIMER32_0_BASE) == 0);
+}
 

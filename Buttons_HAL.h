@@ -16,11 +16,12 @@ bool Booster_Top_Button_Pressed();
 bool Booster_Bottom_Button_Pressed();
 bool Launchpad_Left_Button_Pressed();
 bool Launchpad_Right_Button_Pressed();
-
+bool Booster_Joystick_Pressed();
 // The below functions return true if the button mentioned in the function name is pushed
 // Pushing means pressing followed by releasing. The function returns true as soon as the button is released.
 // These functions use debounced button status
 bool Booster_Top_Button_Pushed();
 bool Booster_Bottom_Button_Pushed();
+bool Booster_Joystick_Pushed();
 
 #endif // BUTTONS_H_

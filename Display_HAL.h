@@ -16,7 +16,11 @@
 void InitGraphics();
 void LCDClearDisplay(int color);
 void LCDDrawChar(unsigned row, unsigned col, int8_t c);
+void LCDDrawLine();
+void LCDDrawCar(int16_t prevCarX, int16_t curCarX);
+
 void PrintString(char *str, int row, int col);
+void ClearString(char *str, int row, int col);
 
 
 

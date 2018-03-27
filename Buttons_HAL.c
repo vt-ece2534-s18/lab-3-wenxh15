@@ -96,6 +96,9 @@ void InitButtons() {
 
     GPIO_setAsInputPin (GPIO_PORT_P1, GPIO_PIN4); // right button on Launchpad
     GPIO_setAsInputPinWithPullUpResistor (GPIO_PORT_P1, GPIO_PIN4);
+
+    GPIO_setAsInputPin (GPIO_PORT_P4, GPIO_PIN1);
+    GPIO_setAsInputPinWithPullUpResistor (GPIO_PORT_P4, GPIO_PIN1);
 }
 
 bool Booster_Top_Button_Pressed() {
@@ -112,6 +115,10 @@ bool Launchpad_Left_Button_Pressed() {
 
 bool Launchpad_Right_Button_Pressed() {
     return (GPIO_getInputPinValue(GPIO_PORT_P1, GPIO_PIN4) == 0);
+}
+
+bool Booster_Joystick_Pressed() {
+    return (GPIO_getInputPinValue(GPIO_PORT_P4, GPIO_PIN1) == 0);
 }
 
 bool Booster_Top_Button_Pushed() {
@@ -160,5 +167,27 @@ bool Booster_Bottom_Button_Pushed() {
     return pushed;
 }
 
+bool Booster_Joystick_Pushed() {
+
+    static bool prevStatus = false;
+    static DebounceState_t debounceState = stable0;
+    static OneShotSWTimer_t timer;
+    static bool initTimer = false;
+
+    // The timer needs to be initialized only once when the button is used for the first time
+    if (!initTimer) {
+
+        InitOneShotSWTimer(&timer,
+                           TIMER32_1_BASE,
+                           DEBOUNCE_TIMING);
+        initTimer = true;
+    }
+
+    bool rawStatus = Booster_Joystick_Pressed();
+    bool curStatus = Debounce_Button(&debounceState, &timer, rawStatus);
+    bool pushed = (!curStatus && prevStatus);
+    prevStatus = curStatus;
+    return pushed;
+}
 
 

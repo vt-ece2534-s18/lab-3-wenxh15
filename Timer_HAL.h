@@ -21,21 +21,31 @@ typedef struct {
 void InitOneShotSWTimer(OneShotSWTimer_t* OST,
                         uint32_t  hwtimer,
                         uint32_t  waitCycles);
+void InitOneShotCARTimer(OneShotSWTimer_t* CAROST,
+                        uint32_t  hwtimer,
+                        uint32_t  waitCycles);
+void InitOneShotOBSTimer(OneShotSWTimer_t* OBSOST,
+                        uint32_t  hwtimer,
+                        uint32_t  waitCycles);
 
 /*
  * This function simply records the start time which is C1 from notes
  */
 void StartOneShotSWTimer(OneShotSWTimer_t* OST);
-
+void StartOneShotCARTimer(OneShotSWTimer_t* CAROST);
+void StartOneShotOBSTimer(OneShotSWTimer_t* OBSOST);
 /*
  * This function checks to see if the sw timer has expired, i.e. wait cycles has passed
  */
 bool OneShotSWTimerExpired(OneShotSWTimer_t* OST);
-
+bool OneShotCARTimerExpired(OneShotSWTimer_t* CAROST);
+bool OneShotOBSTimerExpired(OneShotSWTimer_t* OBSOST);
 /*
  * This function initializes both hw timers
  */
 void InitHWTimers();
+void StartOneShotHWTimer();
+int OneShotHWTimerExpired();
 
 
 
