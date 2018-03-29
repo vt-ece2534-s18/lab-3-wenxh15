@@ -8,6 +8,7 @@
 #include <Timer_HAL.h>
 #include <Display_HAL.h>
 #include <ADC_HAL.h>
+#include <stdlib.h>
 
 #define OPENING_WAIT 3000 // 3 seconds or 3000 ms
 #define CAR_WAIT 50
@@ -26,17 +27,24 @@ bool Ingame = false;
 bool ArrowMove = true;
 bool pause = false;
 bool GO;
+bool next = false;
 
-int16_t prevCarX = 16;
-int16_t curCarX = 16;
-int16_t prevObs1;
-int16_t curObs1;
-int16_t prevObs2;
-int16_t curObs2;
-int16_t prevObs3;
-int16_t curObs3;
+
+int16_t prevCarX = 15;
+int16_t curCarX = 15;
+int16_t prevObs1 = 0;
+int16_t curObs1 = 0;
+int16_t prevObs2 = 0;
+int16_t curObs2 = 0;
+int16_t prevObs3 = 0;
+int16_t curObs3 = 0;
+int16_t ObsX = 15;
+int16_t prevObsY = 0;
+int16_t curObsY = 0;
 
 unsigned int vx, vy;
+int Count;
+
 
 void DrawOpeningScreen()
 {
@@ -91,6 +99,7 @@ void DrawGameScreen()
     PrintString("SCORE", 4, 8);
     LCDDrawLine();
     LCDDrawCar(prevCarX, curCarX);
+    LCDDrawObs(ObsX, prevObsY, curObsY);
 }
 
 void DrawGameOverScreen()
@@ -137,9 +146,8 @@ void PauseScreenFSM()
         if (Booster_Joystick_Pushed())
           {
               DrawMenuScreen();
-              pause = false;
               Ingame = false;
-              s = ContinueGame;
+              pause = false;
           }
                  if (vy > UP_THRESHOLD || vy < DOWN_THRESHOLD)
                 {
@@ -272,89 +280,174 @@ void MainMenuFSM()
 void ScreensFSM()
 {
     static enum states {INCEPTION, OPENING, MENU} state = INCEPTION;
-    static OneShotSWTimer_t OST;//, CAROST, OBSOST;
-    //static bool newGame;
-    // Set the default outputs
-    bool drawOpeningScreen = false;
-    bool drawMenuScreen = false;
-    bool startSWTimer = false;
-    //bool startCARTimer = false;
-    //bool startOBSTimer = false;
-
-    // Inputs of the FSM
-    bool swTimerExpired;
-
-    /*InitOneShotSWTimer(&OST,
+    static OneShotSWTimer_t OST;
+    InitOneShotSWTimer(&OST,
                        TIMER32_1_BASE,
                        OPENING_WAIT);
-    InitOneShotCARTimer(&CAROST,
-                       TIMER32_1_BASE,
-                       CAR_WAIT);
-    InitOneShotOBSTimer(&OBSOST,
-                       TIMER32_1_BASE,
-                       OBS_WAIT);
-*/
+
+    // Set the default outputs
+    bool drawOpening = false;
+    bool drawMenu = false;
 
     switch (state)
     {
     case INCEPTION:
-        //StartOneShotSWTimer(&OST);
+        StartOneShotSWTimer(&OST);
 
         // State transition
         state = OPENING;
 
         // The output(s) that are affected in this transition
-        drawOpeningScreen = true;
-        startSWTimer = true;
+        drawOpening = true;
         break;
 
     case OPENING:
-        swTimerExpired = OneShotSWTimerExpired(&OST);
-        if (swTimerExpired)
+        if (OneShotSWTimerExpired(&OST))
         {
             // State transition
             state = MENU;
 
             // The output(s) that are affected in this transition
-            drawMenuScreen = true;
+            drawMenu = true;
         }
         break;
 
     case MENU:
-
         break;
 
     } // End of switch-case
 
     // Implement actions based on the outputs of the FSM
-    if (startSWTimer)
-    {
-        InitOneShotSWTimer(&OST, TIMER32_1_BASE, OPENING_WAIT);
-        StartOneShotSWTimer(&OST);
-    }
+    if (drawOpening)
+            DrawOpeningScreen();
 
-    if (drawOpeningScreen)
-       DrawOpeningScreen();
-
-    if (drawMenuScreen)
-       DrawMenuScreen();
+    if (drawMenu)
+        DrawMenuScreen();
 }
+/*
+void MoveObs()
+{
+    int numberObs = rand()%3;
+    static OneShotSWTimer_t OBS;
+    bool swTimerExpired;
+    InitOneShotSWTimer(&OBS, TIMER32_1_BASE, OBS_WAIT);
+    if (numberObs == 0)
+    {
+        if (curObs1 < 127)
+        {
+            StartOneShotSWTimer(&OBS);
+            swTimerExpired = OneShotSWTimerExpired(&OBS);
+            while (!swTimerExpired)
+            {
+                swTimerExpired = OneShotSWTimerExpired(&OBS);
+            }
+            curObs1++;
+            LCDDrawObs1(prevObs1, curObs1);
+            prevObs1 = curObs1;
+            if (curObs1 < 50)
+            {
+                next = false;
+            }
+        }
+    }
+    else if(numberObs == 1)
+    {
+        if (curObs2 < 127)
+        {
+            StartOneShotSWTimer(&OBS);
+            swTimerExpired = OneShotSWTimerExpired(&OBS);
+            while (!swTimerExpired)
+            {
+                swTimerExpired = OneShotSWTimerExpired(&OBS);
+            }
+            curObs2++;
+            LCDDrawObs2(prevObs2, curObs2);
+            prevObs2 = curObs2;
+            if (curObs2 < 50)
+            {
+                next = false;
+            }
+        }
+    }
+    else if(numberObs == 2)
+    {
+        if (curObs1 < 127)
+        {
+            StartOneShotSWTimer(&OBS);
+            swTimerExpired = OneShotSWTimerExpired(&OBS);
+            while (!swTimerExpired)
+            {
+                swTimerExpired = OneShotSWTimerExpired(&OBS);
+            }
+            curObs3++;
+            LCDDrawObs3(prevObs3, curObs3);
+            prevObs3 = curObs3;
+            if (curObs3 < 50)
+            {
+                next = false;
+            }
+        }
+    }
+}
+*/
+void MoveObs()
+{
+   // int numberObs = rand()%3;
+    static OneShotSWTimer_t OBS;
+    bool swTimerExpired;
+    InitOneShotSWTimer(&OBS, TIMER32_1_BASE, OBS_WAIT);
+  //  if (numberObs == 0)
+   // {
+      //  ObsX = 15;
+  //  }
+  //  else if (numberObs == 1)
+  //  {
+   //     ObsX = 31;
+   // }
+  //  else if (numberObs == 2)
+  //  {
+  //      ObsX = 47;
+   // }
+             if (curObsY < 129)
+             {
+                 StartOneShotSWTimer(&OBS);
+                 swTimerExpired = OneShotSWTimerExpired(&OBS);
+                 while (!swTimerExpired)
+                 {
+                     swTimerExpired = OneShotSWTimerExpired(&OBS);
+                 }
+                 curObsY++;
+                 LCDDrawObs(ObsX, prevObsY, curObsY);
+                 prevObsY = curObsY;
+             }
+
+
+    }
 
 void MoveCar()
 {
+    static OneShotSWTimer_t CAR;
+    bool swTimerExpired;
+    InitOneShotSWTimer(&CAR, TIMER32_1_BASE, CAR_WAIT);
+    StartOneShotSWTimer(&CAR);
+    swTimerExpired = OneShotSWTimerExpired(&CAR);
+    while (!swTimerExpired)
+    {
+        swTimerExpired = OneShotSWTimerExpired(&CAR);
+    }
     getSampleJoyStick(&vx, &vy);
     if (vx > UP_THRESHOLD)
     {
-        if(prevCarX < 48)
+        if(prevCarX < 47)
         {
             curCarX++;
             LCDDrawCar(prevCarX, curCarX);
             prevCarX = curCarX;
         }
     }
-    else if (vx < DOWN_THRESHOLD)
+    if (vx < DOWN_THRESHOLD)
     {
-        if(prevCarX > 16)
+        if(prevCarX > 15)
         {
             curCarX--;
             LCDDrawCar(prevCarX, curCarX);
@@ -364,10 +457,10 @@ void MoveCar()
 }
 
 
+
 int main(void) {
 
     WDT_A_hold(WDT_A_BASE);
-
     BSP_Clock_InitFastest();
     initADC_Multi();
     InitGraphics();
@@ -376,21 +469,14 @@ int main(void) {
     InitButtons();
     InitLEDs();
 
-    StartOneShotHWTimer();
     startADC();
-    static OneShotSWTimer_t A;
-    bool swTimerExpired;
-    InitOneShotSWTimer(&A, TIMER32_1_BASE, CAR_WAIT);
 
     while (1)
     {
         // Do not delete this statement. We will use this function to check if your program does not block on anything.
-      //  if (Booster_Bottom_Button_Pushed())
-           // Toggle_Launchpad_Right_Red_LED();
-
-
+        if (Booster_Bottom_Button_Pushed())
+            Toggle_Launchpad_Right_Red_LED();
         ScreensFSM();
-       // getSampleJoyStick(&vx, &vy);
         if (Ingame)
         {
             if (Booster_Top_Button_Pushed())
@@ -400,22 +486,17 @@ int main(void) {
                  }
             if(pause)
             {
-
                 PauseScreenFSM();
-                //if (Booster_Bottom_Button_Pushed())
-                                           //Toggle_Launchpad_Right_Red_LED();
             }
             else
             {
-                    swTimerExpired = OneShotSWTimerExpired(&A);
-                    if(swTimerExpired)
-                    {
-                        MoveCar();
-                        //MoveObs();
-                        //Evaluate();
-                    }
+                MoveObs();
+                MoveCar();
 
 
+
+
+                //Evaluate();
             }
             if(GO)
             {
@@ -426,19 +507,7 @@ int main(void) {
         else
          {
             MainMenuFSM();
-           // if (Booster_Bottom_Button_Pushed())
-                        //      Toggle_Launchpad_Right_Red_LED();
-
          }
-        if(Ingame)
-        {
-            if(!pause)
-            {
-                StartOneShotSWTimer(&A);
-            }
-        }
     }
+
 }
-
-
-
