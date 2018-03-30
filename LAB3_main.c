@@ -8,7 +8,6 @@
 #include <Timer_HAL.h>
 #include <Display_HAL.h>
 #include <ADC_HAL.h>
-#include <stdlib.h>
 
 #define OPENING_WAIT 3000 // 3 seconds or 3000 ms
 #define CAR_WAIT 50
@@ -18,16 +17,19 @@
 #define MIDDLE_MAX_THRESHOLD 0x1500
 #define MIDDLE_MIN_THRESHOLD 0x2500
 
-enum {Game, Play, History} S; //states of "->" of main menu option
+ enum {Game, Play, History} S;//let the "->" point to the correct option//states of "->" of main menu option
 
-typedef enum {PlayGame, HowToPlay, ScoreHistory} menu_t;
-typedef enum {ContinueGame, MainMenu} pause_t;
+
+//typedef enum {PlayGame, HowToPlay, ScoreHistory} menu_t;
+//typedef enum {ContinueGame, MainMenu} pause_t;
 
 bool Ingame = false;
 bool ArrowMove = true;
 bool pause = false;
 bool GO;
 bool next = false;
+bool newgame = true;
+bool hit1,hit2,hit3;
 
 
 int16_t prevCarX = 15;
@@ -38,12 +40,40 @@ int16_t prevObs2 = 0;
 int16_t curObs2 = 0;
 int16_t prevObs3 = 0;
 int16_t curObs3 = 0;
-int16_t ObsX = 15;
-int16_t prevObsY = 0;
-int16_t curObsY = 0;
+int16_t prevObs4 = 0;
+int16_t curObs4 = 0;
+int16_t obs0 = 15;
+int16_t obs1 = 15;
+int16_t obs2 = 15;
+int16_t bonus;
+int16_t bonusX = 15;
+int16_t prevBonus = -1;
+int16_t curBonus = -1;
+int16_t acc = 1;
+
 
 unsigned int vx, vy;
-int Count;
+unsigned score, life;
+
+
+
+int16_t randObsX()
+{
+    int place = rand()%3;
+    if(place == 0)
+    {
+        return 15;
+    }
+    else if(place == 1)
+    {
+        return 31;
+    }
+    else if (place == 2)
+    {
+        return 47;
+    }
+   return -1;
+}
 
 
 void DrawOpeningScreen()
@@ -97,19 +127,28 @@ void DrawGameScreen()
     PrintString("SCORE", 0, 8);
     PrintString("HIGH", 3, 8);
     PrintString("SCORE", 4, 8);
+    PrintString("LIFE", 6, 8);
+
     LCDDrawLine();
     LCDDrawCar(prevCarX, curCarX);
-    LCDDrawObs(ObsX, prevObsY, curObsY);
 }
 
 void DrawGameOverScreen()
 {
+    static OneShotSWTimer_t OST;
+    bool swTimerExpired;
+    InitOneShotSWTimer(&OST,TIMER32_1_BASE,OPENING_WAIT);
     LCDClearDisplay(MY_BLACK);
     PrintString("GAME OVER", 0,5);
     PrintString("1st",2,0);
     PrintString("2nd",4,0);
     PrintString("3rd",6,0);
-    PrintString("BTN1-MENU",7,7);
+    StartOneShotSWTimer(&OST);
+    swTimerExpired = OneShotSWTimerExpired(&OST);
+    while (!swTimerExpired)
+    {
+        swTimerExpired = OneShotSWTimerExpired(&OST);
+    }
 }
 void DrawPauseScreen()
 {
@@ -122,7 +161,7 @@ void DrawPauseScreen()
 
 void PauseScreenFSM()
 {
-    //typedef enum {ContinueGame, MainMenu} pause_t;
+    typedef enum {ContinueGame, MainMenu} pause_t;
     static pause_t s = ContinueGame;
     switch (s)
     {
@@ -148,6 +187,7 @@ void PauseScreenFSM()
               DrawMenuScreen();
               Ingame = false;
               pause = false;
+              newgame = false;
           }
                  if (vy > UP_THRESHOLD || vy < DOWN_THRESHOLD)
                 {
@@ -161,7 +201,7 @@ void PauseScreenFSM()
 }
 
 void PrintMenuOption(S)
-{//let the "->" point to the correct option
+{
     switch(S){
     case Play:
         ClearString("->",2,1);
@@ -183,7 +223,7 @@ void PrintMenuOption(S)
 
 void MainMenuFSM()
 {// choose which screen will showing up next
-    //typedef enum {PlayGame, HowToPlay, ScoreHistory} menu_t; //states of what process going
+    typedef enum {PlayGame, HowToPlay, ScoreHistory} menu_t; //states of what process going
     static menu_t menuOption = PlayGame;
     switch(menuOption){
     case PlayGame:
@@ -193,6 +233,10 @@ void MainMenuFSM()
               DrawGameScreen();
               Ingame = true;
               GO = false;
+              score = 0;
+              ArrowMove = false;
+              life = 3;
+              bonus = 0;
           }
         if (ArrowMove)
         {
@@ -324,140 +368,209 @@ void ScreensFSM()
     if (drawMenu)
         DrawMenuScreen();
 }
-/*
+
 void MoveObs()
 {
-    int numberObs = rand()%3;
-    static OneShotSWTimer_t OBS;
-    bool swTimerExpired;
-    InitOneShotSWTimer(&OBS, TIMER32_1_BASE, OBS_WAIT);
-    if (numberObs == 0)
+    if(curObs1 == -1)
     {
-        if (curObs1 < 127)
+        if(curObs3 == -1 || curObs3 > 50)
         {
-            StartOneShotSWTimer(&OBS);
-            swTimerExpired = OneShotSWTimerExpired(&OBS);
-            while (!swTimerExpired)
-            {
-                swTimerExpired = OneShotSWTimerExpired(&OBS);
-            }
-            curObs1++;
-            LCDDrawObs1(prevObs1, curObs1);
-            prevObs1 = curObs1;
-            if (curObs1 < 50)
-            {
-                next = false;
-            }
+            obs0 = randObsX();
+            curObs1 = 0;
+            prevObs1 = 0;
+            hit1 = true;
         }
     }
-    else if(numberObs == 1)
+    else if(curObs1 < 128 && curObs1 > -1)
     {
-        if (curObs2 < 127)
+        curObs1 += acc;
+        LCDDrawObs(prevObs1, curObs1, obs0);
+        prevObs1 = curObs1;
+    }
+    else if(curObs1 >= 128)
+    {
+        curObs1 = -1;
+        bonus--;
+        score++;
+    }
+
+    if(curObs2 == -1)
+    {
+        if(curObs1 > 50)
         {
-            StartOneShotSWTimer(&OBS);
-            swTimerExpired = OneShotSWTimerExpired(&OBS);
-            while (!swTimerExpired)
-            {
-                swTimerExpired = OneShotSWTimerExpired(&OBS);
-            }
-            curObs2++;
-            LCDDrawObs2(prevObs2, curObs2);
-            prevObs2 = curObs2;
-            if (curObs2 < 50)
-            {
-                next = false;
-            }
+            obs1 = randObsX();
+            curObs2 = 0;
+            prevObs2 = 0;
+            hit2 = true;
         }
     }
-    else if(numberObs == 2)
+    else if(curObs2 < 128 && curObs2 > -1)
     {
-        if (curObs1 < 127)
+        curObs2 += acc;
+        LCDDrawObs(prevObs2, curObs2, obs1);
+        prevObs2 = curObs2;
+    }
+    else if(curObs2 >= 128)
+    {
+        curObs2 = -1;
+        bonus--;
+        score++;
+    }
+
+    if(curObs3 == -1)
         {
-            StartOneShotSWTimer(&OBS);
-            swTimerExpired = OneShotSWTimerExpired(&OBS);
-            while (!swTimerExpired)
+            if(curObs2 > 50)
             {
-                swTimerExpired = OneShotSWTimerExpired(&OBS);
+                obs2 = randObsX();
+                curObs3 = 0;
+                prevObs3 = 0;
+                hit3 = true;
             }
-            curObs3++;
-            LCDDrawObs3(prevObs3, curObs3);
+        }
+        else if(curObs3 < 128 && curObs3 > -1)
+        {
+            curObs3 += acc;
+            LCDDrawObs(prevObs3, curObs3, obs2);
             prevObs3 = curObs3;
-            if (curObs3 < 50)
-            {
-                next = false;
-            }
         }
-    }
+        else if(curObs3 >= 128)
+        {
+            curObs3 = -1;
+            bonus--;
+            score++;
+        }
+
 }
-*/
-void MoveObs()
-{
-   // int numberObs = rand()%3;
-    static OneShotSWTimer_t OBS;
-    bool swTimerExpired;
-    InitOneShotSWTimer(&OBS, TIMER32_1_BASE, OBS_WAIT);
-  //  if (numberObs == 0)
-   // {
-      //  ObsX = 15;
-  //  }
-  //  else if (numberObs == 1)
-  //  {
-   //     ObsX = 31;
-   // }
-  //  else if (numberObs == 2)
-  //  {
-  //      ObsX = 47;
-   // }
-             if (curObsY < 129)
-             {
-                 StartOneShotSWTimer(&OBS);
-                 swTimerExpired = OneShotSWTimerExpired(&OBS);
-                 while (!swTimerExpired)
-                 {
-                     swTimerExpired = OneShotSWTimerExpired(&OBS);
-                 }
-                 curObsY++;
-                 LCDDrawObs(ObsX, prevObsY, curObsY);
-                 prevObsY = curObsY;
-             }
 
-
-    }
 
 void MoveCar()
 {
-    static OneShotSWTimer_t CAR;
-    bool swTimerExpired;
-    InitOneShotSWTimer(&CAR, TIMER32_1_BASE, CAR_WAIT);
-    StartOneShotSWTimer(&CAR);
-    swTimerExpired = OneShotSWTimerExpired(&CAR);
-    while (!swTimerExpired)
-    {
-        swTimerExpired = OneShotSWTimerExpired(&CAR);
-    }
     getSampleJoyStick(&vx, &vy);
     if (vx > UP_THRESHOLD)
     {
+        curCarX +=acc;
         if(prevCarX < 47)
         {
-            curCarX++;
+            LCDDrawCar(prevCarX, curCarX);
+            prevCarX = curCarX;
+        }
+        else
+        {
+            curCarX = 47;
             LCDDrawCar(prevCarX, curCarX);
             prevCarX = curCarX;
         }
     }
     if (vx < DOWN_THRESHOLD)
     {
+        curCarX -= acc;
         if(prevCarX > 15)
         {
-            curCarX--;
+            LCDDrawCar(prevCarX, curCarX);
+            prevCarX = curCarX;
+        }
+        else
+        {
+            curCarX=15;
             LCDDrawCar(prevCarX, curCarX);
             prevCarX = curCarX;
         }
     }
 }
 
+void Evaluate()
+{
+    if(curObs1 >= 97 && curObs1 <= 127)
+    {
+        if(obs0 > curCarX + 15 || curCarX > obs0 + 15)
+        {
 
+        }
+        else
+        {
+            if(hit1)
+            {
+                life--;
+                hit1 = false;
+            }
+        }
+    }
+    if(curObs2 >= 97 && curObs2 <= 127)
+        {
+            if(obs1 > curCarX + 15 || curCarX > obs1 + 15)
+            {
 
+            }
+            else
+            {
+                if(hit2)
+                {
+                    life--;
+                    hit2 = false;
+                }
+            }
+        }
+    if(curObs3 >= 97 && curObs3 <= 127)
+        {
+            if(obs2 > curCarX + 15 || curCarX > obs2 + 15)
+            {
+
+            }
+            else
+            {
+                if(hit3)
+                {
+                    life--;
+                    hit3 = false;
+                }
+            }
+        }
+    if(curBonus >=97 && curBonus <=127)
+    {
+        if(bonusX > curCarX + 15 || curCarX > bonusX + 15)
+        {
+
+        }
+        else
+        {
+            curBonus = 128;
+            LCDDrawBonus(prevBonus, curBonus, bonusX);
+            curBonus = -1;
+            life++;
+        }
+    }
+    if(life <= 0)
+    {
+        GO = true;
+    }
+}
+
+void MoveBonus()
+{
+    if(curBonus == -1)
+    {
+        if(bonus <= 0)
+        {
+            if((curObs1 >15 || curObs1 == -1) && (curObs2 >15 || curObs2 == -1) && (curObs3 >15 || curObs3 == -1))
+            {
+                bonusX = randObsX();
+                curBonus = 0;
+                prevBonus = 0;
+                bonus = rand()%5;
+            }
+        }
+    }
+    else if(curBonus < 128 && curBonus > -1)
+    {
+        curBonus += acc;
+        LCDDrawBonus(prevBonus, curBonus, bonusX);
+        prevBonus = curBonus;
+    }
+    else if(curBonus >= 128)
+    {
+        curBonus = -1;
+    }
+}
 int main(void) {
 
     WDT_A_hold(WDT_A_BASE);
@@ -471,6 +584,8 @@ int main(void) {
 
     startADC();
 
+    static OneShotSWTimer_t CAR;
+    bool swTimerExpired;
     while (1)
     {
         // Do not delete this statement. We will use this function to check if your program does not block on anything.
@@ -490,23 +605,54 @@ int main(void) {
             }
             else
             {
-                MoveObs();
+                InitOneShotSWTimer(&CAR, TIMER32_1_BASE, CAR_WAIT);
+                StartOneShotSWTimer(&CAR);
+                swTimerExpired = OneShotSWTimerExpired(&CAR);
+                while (!swTimerExpired)
+                    {
+                        swTimerExpired = OneShotSWTimerExpired(&CAR);
+                    }
                 MoveCar();
-
-
-
-
-                //Evaluate();
+                MoveObs();
+                MoveBonus();
+                Evaluate();
+                char buf = ((score/10)%10)+'0';
+                PrintString(&buf, 1, 8);
+                buf = (score%10)+'0';
+                PrintString(&buf, 1, 9);
+                buf = (life%10)+'0';
+                PrintString(&buf, 7, 8);
+                getSampleJoyStick(&vx, &vy);
+                if (vy > UP_THRESHOLD)
+                {
+                    acc ++;
+                }
+                else if (vy < DOWN_THRESHOLD)
+                {
+                    if(acc > 1)
+                    {
+                        acc--;
+                    }
+                }
             }
             if(GO)
             {
-                //DrawGameOver();
+                DrawGameOverScreen();
+                DrawMenuScreen();
+                PrintMenuOption(Game);
+                ArrowMove = true;
                 Ingame = false;
             }
         }
         else
          {
             MainMenuFSM();
+            curObs1 = -1;
+            curObs2 = -1;
+            curObs3 = -1;
+            prevCarX = 15;
+            curCarX = 15;
+            acc = 1;
          }
     }
 
