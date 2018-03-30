@@ -22,6 +22,7 @@ void LCDDrawCar(int16_t prevCarX, int16_t curCarX);
 void LCDDrawObs(int16_t prevObs, int16_t curObs, int16_t randObs);
 void LCDDrawBonus(int16_t prevObs, int16_t curObs, int16_t randObs);
 
+
 void PrintString(char *str, int row, int col);
 void ClearString(char *str, int row, int col);
 

@@ -111,6 +111,8 @@ void PrintString(char *str, int row, int col) {
     }
 }
 
+
+
 void ClearString(char *str, int row, int col) {
     int i;
     for (i = 0; str[i] != '\0'; i++) {

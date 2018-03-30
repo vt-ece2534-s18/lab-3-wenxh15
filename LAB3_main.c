@@ -51,11 +51,30 @@ int16_t prevBonus = -1;
 int16_t curBonus = -1;
 int16_t acc = 1;
 
+int16_t S1 = 0;
+int16_t S2 = 0;
+int16_t S3 = 0;
 
 unsigned int vx, vy;
-unsigned score, life;
+unsigned int score, life;
 
 
+
+void history()
+{
+    if(score > S1)
+    {
+        S1 = score;
+    }
+    if(score > S2 && S2 != 0)
+    {
+        S2 = score;
+    }
+    if(score > S3 && S3 != 0)
+    {
+        S3 = score;
+    }
+}
 
 int16_t randObsX()
 {
@@ -116,8 +135,20 @@ void DrawScoreScreen()
     LCDClearDisplay(MY_BLACK);
     PrintString("SCORES", 0,5);
     PrintString("1st",2,0);
+    char buf = ((S1/10)%10)+'0';
+    PrintString(&buf,2,5);
+    buf = (S1%10)+'0';
+    PrintString(&buf,2,6);
     PrintString("2nd",4,0);
+    buf = ((S2/10)%10)+'0';
+    PrintString(&buf,4,5);
+    buf = (S2%10)+'0';
+    PrintString(&buf,4,6);
     PrintString("3rd",6,0);
+    buf = ((S3/10)%10)+'0';
+    PrintString(&buf,6,5);
+    buf = (S3%10)+'0';
+    PrintString(&buf,6,6);
     PrintString("BTN1-MENU",7,7);
 }
 
@@ -127,6 +158,10 @@ void DrawGameScreen()
     PrintString("SCORE", 0, 8);
     PrintString("HIGH", 3, 8);
     PrintString("SCORE", 4, 8);
+    char buf = ((S1/10)%10)+'0';
+    PrintString(&buf,5,8);
+    buf = (S1%10)+'0';
+    PrintString(&buf,5,9);
     PrintString("LIFE", 6, 8);
 
     LCDDrawLine();
@@ -140,9 +175,11 @@ void DrawGameOverScreen()
     InitOneShotSWTimer(&OST,TIMER32_1_BASE,OPENING_WAIT);
     LCDClearDisplay(MY_BLACK);
     PrintString("GAME OVER", 0,5);
-    PrintString("1st",2,0);
-    PrintString("2nd",4,0);
-    PrintString("3rd",6,0);
+    PrintString("Score :",2,0);
+    char buf = ((score/10)%10)+'0';
+    PrintString(&buf, 2, 7);
+    buf = (score%10)+'0';
+    PrintString(&buf, 2, 8);
     StartOneShotSWTimer(&OST);
     swTimerExpired = OneShotSWTimerExpired(&OST);
     while (!swTimerExpired)
@@ -617,11 +654,11 @@ int main(void) {
                 MoveBonus();
                 Evaluate();
                 char buf = ((score/10)%10)+'0';
-                PrintString(&buf, 1, 8);
-                buf = (score%10)+'0';
                 PrintString(&buf, 1, 9);
+                buf = (score%10)+'0';
+                PrintString(&buf, 1, 10);
                 buf = (life%10)+'0';
-                PrintString(&buf, 7, 8);
+                PrintString(&buf, 7, 10);
                 getSampleJoyStick(&vx, &vy);
                 if (vy > UP_THRESHOLD)
                 {
@@ -637,6 +674,7 @@ int main(void) {
             }
             if(GO)
             {
+                history();
                 DrawGameOverScreen();
                 DrawMenuScreen();
                 PrintMenuOption(Game);
