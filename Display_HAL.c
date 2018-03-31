@@ -32,7 +32,7 @@ void LCDDrawChar(unsigned row, unsigned col, int8_t c) {
                         OPAQUE_TEXT);
 }
 
-void LCDDrawLine()
+void LCDDrawLine()//draw the road line
 {
     Graphics_setForegroundColor(&g_sContext, GRAPHICS_COLOR_GREEN);
     Graphics_drawLineV(&g_sContext,14,0,128);
@@ -42,7 +42,7 @@ void LCDDrawLine()
 
 }
 
-void LCDDrawCar(int16_t prevCarX, int16_t curCarX)
+void LCDDrawCar(int16_t prevCarX, int16_t curCarX)//draw the car
 {
     Graphics_setForegroundColor(&g_sContext, GRAPHICS_COLOR_BLACK);
     Graphics_Rectangle R;

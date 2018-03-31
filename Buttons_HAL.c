@@ -97,7 +97,7 @@ void InitButtons() {
     GPIO_setAsInputPin (GPIO_PORT_P1, GPIO_PIN4); // right button on Launchpad
     GPIO_setAsInputPinWithPullUpResistor (GPIO_PORT_P1, GPIO_PIN4);
 
-    GPIO_setAsInputPin (GPIO_PORT_P4, GPIO_PIN1);
+    GPIO_setAsInputPin (GPIO_PORT_P4, GPIO_PIN1);//joystick
     GPIO_setAsInputPinWithPullUpResistor (GPIO_PORT_P4, GPIO_PIN1);
 }
 

@@ -17,11 +17,7 @@
 #define MIDDLE_MAX_THRESHOLD 0x1500
 #define MIDDLE_MIN_THRESHOLD 0x2500
 
- enum {Game, Play, History} S;//let the "->" point to the correct option//states of "->" of main menu option
-
-
-//typedef enum {PlayGame, HowToPlay, ScoreHistory} menu_t;
-//typedef enum {ContinueGame, MainMenu} pause_t;
+enum {Game, Play, History} S;//let the "->" point to the correct option
 
 bool Ingame = false;
 bool ArrowMove = true;
@@ -66,11 +62,11 @@ void history()
     {
         S1 = score;
     }
-    if(score > S2 && S2 != 0)
+    else if(score > S2 && score < S1)
     {
         S2 = score;
     }
-    if(score > S3 && S3 != 0)
+    else if(score > S3 && score < S2)
     {
         S3 = score;
     }
