@@ -113,7 +113,7 @@ void DrawInstructionScreen()
 {
     LCDClearDisplay(MY_BLACK);
     PrintString("INSTRUCTIONS", 0,2);
-    PrintString("this is the instruction blablablablablablablablab",2,0);
+    PrintString("Use Joystick move the yellow car hiding red Obstacles and pushed it up or down to speed up or slow the car. Hit blue bonus will add life ",2,0);
     PrintString("BTN1-MENU",7,7);
 }
 
